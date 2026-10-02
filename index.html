@@ -1,0 +1,1117 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>無駄NET</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+KakuGothic+New:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="42" x="50" text-anchor="middle" font-size="42" font-weight="bold" fill="%238888fa">無</text><text y="85" x="50" text-anchor="middle" font-size="42" font-weight="bold" fill="%23fa8888"> 使</text></svg>'>
+    <style>
+      :root {
+        --bg: #f3eeff;
+        --fg: #101010;
+        --a: #8888fa;
+        --b: #0a9bb8;
+        --c: #daaa00;
+        --card: rgba(28, 16, 64, 0.08);
+        --line: rgba(28, 16, 64, 0.16);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #150d33;
+          --fg: #f4f0ff;
+          --a: #fa8888;
+          --b: #3de8ff;
+          --c: #ffd23f;
+          --card: rgba(255, 255, 255, 0.08);
+          --line: rgba(255, 255, 255, 0.18);
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #1e1a2e;
+        --fg: #f4f0ff;
+        --a: #fa8888;
+        --b: #3de8ff;
+        --c: #ffd23f;
+        --card: rgba(255, 255, 255, 0.08);
+        --line: rgba(255, 255, 255, 0.18);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family:
+          "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+        line-height: 1.8;
+        overflow: hidden;
+        overscroll-behavior: none;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      canvas#bg {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        pointer-events: none;
+      }
+      main,
+      nav {
+        position: relative;
+        z-index: 1;
+      }
+      button,
+      input {
+        color: inherit;
+        font: inherit;
+      }
+      :focus-visible {
+        outline: 3px solid var(--b);
+        outline-offset: 3px;
+      }
+
+      nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px clamp(16px, 4vw, 48px);
+        font-weight: 700;
+      }
+      .nav-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .tg,
+      .btn-action {
+        border: 0px solid;
+        background: var(--card);
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        margin-top: 4px;
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+        transition:
+          opacity 0.2s ease,
+          visibility 0.2s ease,
+          background 0.2s ease;
+      }
+      .btn-action:hover {
+        background: var(--line);
+      }
+
+      .debug-overlay {
+        position: fixed;
+        top: max(16px, env(safe-area-inset-top));
+        left: max(16px, env(safe-area-inset-left));
+        z-index: 100;
+        background: rgba(0, 0, 0, 0.65);
+        color: #ffffff;
+        font-family: consolas, monospace;
+        font-size: 0.75rem;
+        padding: 8px 12px;
+        pointer-events: none;
+        transition:
+          opacity 0.2s ease,
+          visibility 0.2s ease;
+      }
+
+      .ctrl-panel {
+        position: fixed;
+        top: 70px;
+        right: clamp(16px, 4vw, 48px);
+        z-index: 10;
+        background: var(--card);
+        backdrop-filter: blur(4px);
+        border-radius: 12px;
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: min(280px, 90vw);
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+        touch-action: pan-y;
+        overscroll-behavior: contain;
+        font-size: 0.85rem;
+        transition:
+          opacity 0.2s ease,
+          visibility 0.2s ease;
+      }
+      @media (max-width: 600px) {
+        .ctrl-panel {
+          top: 60px;
+          right: 16px;
+          left: 16px;
+          width: auto;
+        }
+      }
+
+      .ctrl-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        border-top: 1px solid var(--line);
+        padding-top: 10px;
+      }
+      .ctrl-section:first-child {
+        border-top: none;
+        padding-top: 0;
+      }
+      .ctrl-section-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        opacity: 0.6;
+        font-family: notosansjp;
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+
+      .ui-hidden {
+        opacity: 0 !important;
+        visibility: hidden !important;
+      }
+
+      .circle-btn {
+        width: clamp(48px, 12vw, 64px);
+        height: clamp(48px, 12vw, 64px);
+        border-radius: 50%;
+        border: 0px solid;
+        background: var(--card);
+        color: var(--fg);
+        backdrop-filter: blur(1px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: none;
+        transition:
+          opacity 0.2s ease,
+          transform 0.1s ease,
+          background 0.2s ease;
+      }
+      .circle-btn:active,
+      .circle-btn.active {
+        background: var(--a);
+        color: #fff;
+        transform: scale(0.92);
+      }
+      .circle-btn {
+        font-size: clamp(14px, 3.5vw, 18px);
+        line-height: 1;
+      }
+      .circle-btn .btn-label {
+        font-size: clamp(9px, 2vw, 10px);
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .circle-btn.ui-hidden {
+        visibility: visible !important;
+        opacity: 0 !important;
+        background: transparent !important;
+        border-color: transparent !important;
+        backdrop-filter: none !important;
+      }
+
+      .top-right-controls {
+        position: fixed;
+        top: max(16px, env(safe-area-inset-top));
+        right: clamp(16px, 4vw, 48px);
+        z-index: 30;
+      }
+
+      .bottom-left-controls {
+        display: none;
+        position: fixed;
+        bottom: max(16px, env(safe-area-inset-bottom));
+        left: max(16px, env(safe-area-inset-left));
+        z-index: 20;
+        gap: clamp(8px, 2vw, 14px);
+      }
+
+      @media (pointer: coarse), (max-width: 768px) {
+        .bottom-left-controls {
+          display: flex;
+        }
+      }
+
+      .ctrl-panel label {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        font-weight: 700;
+      }
+      .ctrl-panel label .val-text {
+        font-weight: 400;
+        opacity: 0.8;
+        float: right;
+      }
+      .ctrl-panel input[type="range"] {
+        accent-color: var(--a);
+        cursor: pointer;
+      }
+      .ctrl-panel label.checkbox-label {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        margin-top: 4px;
+      }
+      .ctrl-panel input[type="checkbox"] {
+        accent-color: var(--a);
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+
+      .hero {
+        min-height: calc(100svh - 70px);
+        display: grid;
+        place-content: center;
+        text-align: center;
+        padding: 0 16px 40px;
+        perspective: 900px;
+      }
+      h1 {
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        font:
+          400 clamp(3.5rem, 18vw, 15rem)/1 "Dela Gothic One",
+          sans-serif;
+        transform: rotateX(var(--ry, 0deg)) rotateY(var(--rx, 0deg));
+        transition: transform 0.15s ease-out;
+        user-select: none;
+      }
+      h1 span {
+        display: inline-block;
+        background: linear-gradient(160deg, var(--a), var(--c) 55%, var(--b));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        transform: translate3d(
+          calc(var(--mx, 0) * var(--d) * 1px),
+          calc(var(--my, 0) * var(--d) * 1px),
+          0
+        );
+        animation: drop 0.9s cubic-bezier(0.2, 1.4, 0.4, 1) both
+          calc(var(--i) * 110ms);
+
+        opacity: 0.5;
+      }
+      @keyframes drop {
+        from {
+          opacity: 0;
+          translate: 0 -80px;
+          rotate: -14deg;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="bg" aria-hidden="true"></canvas>
+
+    <div id="debug-overlay" class="debug-overlay ui-hidden">
+      FPS: <span id="dbg-fps">0</span><br />
+      Particles: <span id="dbg-count">0</span><br />
+      Avg Speed: <span id="dbg-speed">0.0</span> px/s
+    </div>
+
+    <nav>
+      <div class="nav-controls">
+        <button class="tg" id="tg" aria-label="テーマを切り替える">
+          テーマ切替
+        </button>
+      </div>
+    </nav>
+
+    <div class="top-right-controls">
+      <button class="circle-btn" id="mbtn-toggle-ui" aria-label="パネル切替">
+        <span class="btn-label">UI切替</span>
+      </button>
+    </div>
+
+    <div class="bottom-left-controls">
+      <button class="circle-btn" id="mbtn-push" aria-label="反発">
+        <span class="btn-label">反発</span>
+      </button>
+      <button class="circle-btn" id="mbtn-slow" aria-label="減衰">
+        <span class="btn-label">減衰</span>
+      </button>
+      <button class="circle-btn" id="mbtn-strong" aria-label="強引力">
+        <span class="btn-label">強引力</span>
+      </button>
+    </div>
+
+    <div class="ctrl-panel" id="ctrl-panel">
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">Simulation</div>
+        <label>
+          粒子数 <span class="val-text" id="val-count">3000</span>
+          <input
+            type="range"
+            id="param-count"
+            min="500"
+            max="8000"
+            step="250"
+            value="3000"
+          />
+        </label>
+        <button class="btn-action" id="btn-respawn">粒子を再生成</button>
+
+        <label>
+          ダンプ（減衰） <span class="val-text" id="val-drag">0.99</span>
+          <input
+            type="range"
+            id="param-drag"
+            min="0.80"
+            max="0.999"
+            step="0.005"
+            value="0.99"
+          />
+        </label>
+        <label>
+          標準引力 <span class="val-text" id="val-force">1.8</span>
+          <input
+            type="range"
+            id="param-force"
+            min="0.5"
+            max="10"
+            step="0.1"
+            value="1.8"
+          />
+        </label>
+        <label>
+          渦の強さ <span class="val-text" id="val-swirl">0.15</span>
+          <input
+            type="range"
+            id="param-swirl"
+            min="0"
+            max="1"
+            step="0.01"
+            value="0.15"
+          />
+        </label>
+        <label class="checkbox-label">
+          コリジョン（反発）
+          <input type="checkbox" id="param-collision" />
+        </label>
+        <label class="checkbox-label">
+          衝突音（効果音）
+          <input type="checkbox" id="param-audio" />
+        </label>
+      </div>
+
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">Graphics</div>
+        <label class="checkbox-label">
+          パス描画（糸）
+          <input type="checkbox" id="param-draw-lines" checked />
+        </label>
+        <label>
+          粒子サイズ <span class="val-text" id="val-size">2px</span>
+          <input
+            type="range"
+            id="param-size"
+            min="1"
+            max="10"
+            step="0.5"
+            value="2"
+          />
+        </label>
+        <label>
+          糸の最小幅 <span class="val-text" id="val-min-width">0.5px</span>
+          <input
+            type="range"
+            id="param-min-width"
+            min="0.1"
+            max="5"
+            step="0.1"
+            value="0.5"
+          />
+        </label>
+        <label>
+          糸の最大幅 <span class="val-text" id="val-max-width">5.5px</span>
+          <input
+            type="range"
+            id="param-max-width"
+            min="0.5"
+            max="15"
+            step="0.5"
+            value="5.5"
+          />
+        </label>
+        <label>
+          糸の最大距離 <span class="val-text" id="val-max-dist">400px</span>
+          <input
+            type="range"
+            id="param-max-dist"
+            min="100"
+            max="1000"
+            step="50"
+            value="400"
+          />
+        </label>
+        <label>
+          発光（Glow） <span class="val-text" id="val-glow">10px</span>
+          <input
+            type="range"
+            id="param-glow"
+            min="0"
+            max="30"
+            step="1"
+            value="10"
+          />
+        </label>
+      </div>
+    </div>
+
+    <main>
+      <header class="hero">
+        <h1 id="h" aria-label="無駄遣い">
+          <span style="--i: 0; --d: -10">無</span>
+          <span style="--i: 1; --d: -4">駄</span>
+          <span style="--i: 2; --d: 4">遣</span>
+          <span style="--i: 3; --d: 10">い</span>
+        </h1>
+      </header>
+    </main>
+
+<script>
+      (function () {
+        var root = document.documentElement;
+        function toggle() {
+          var d = root.getAttribute("data-theme");
+          var cur =
+            d ||
+            (matchMedia("(prefers-color-scheme:dark)").matches
+              ? "dark"
+              : "light");
+          root.setAttribute("data-theme", cur === "dark" ? "light" : "dark");
+          col();
+        }
+        document.getElementById("tg").onclick = toggle;
+
+        var audioCtx = null;
+        
+        // --- 衝突音の制限設定 ---
+        var MAX_SOUNDS_PER_SEC = 1500; // 1秒間に鳴らせる最大回数
+        var SOUND_COOLDOWN_MS = 20;  // 音が鳴る最短間隔（ミリ秒）
+        var soundHistory = [];
+        var lastSoundTime = 0;
+
+        function initAudio() {
+          if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          }
+          if (audioCtx.state === "suspended") {
+            audioCtx.resume();
+          }
+        }
+
+        // ボール同士の衝突や壁反射時に再生する効果音関数（回数制限つき）
+        function playBounceSound(speed) {
+          if (!audioCtx) return;
+          if (!params.audio) return
+
+          var now = performance.now();
+
+          // 最短発音間隔のチェック
+          if (now - lastSoundTime < SOUND_COOLDOWN_MS) return;
+
+          // 1秒以上前の履歴を削除
+          while (soundHistory.length > 0 && soundHistory[0] <= now - 1000) {
+            soundHistory.shift();
+          }
+
+          // 秒間再生数の上限チェック
+          if (soundHistory.length >= MAX_SOUNDS_PER_SEC) return;
+
+          try {
+            var osc = audioCtx.createOscillator();
+            var gain = audioCtx.createGain();
+            osc.type = "sine";
+            var freq = 800 + Math.random() * 600;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            var vol = Math.min(0.2, Math.max(0.01, speed / 2000));
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.08);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.08);
+
+            // 履歴と最終再生時刻を更新
+            soundHistory.push(now);
+            lastSoundTime = now;
+          } catch (e) {}
+        }
+
+        var params = {
+          count: 3000,
+          drawLines: true,
+          size: 2,
+          minWidth: 0.5,
+          maxWidth: 5.5,
+          maxDist: 400,
+          drag: 0.99,
+          force: 1.8,
+          swirl: 0.15,
+          collision: false,
+          audio: false,
+          glow: 0,
+        };
+
+        var inputCount = document.getElementById("param-count");
+        var btnRespawn = document.getElementById("btn-respawn");
+        var inputDrawLines = document.getElementById("param-draw-lines");
+        var inputSize = document.getElementById("param-size");
+        var inputMinWidth = document.getElementById("param-min-width");
+        var inputMaxWidth = document.getElementById("param-max-width");
+        var inputMaxDist = document.getElementById("param-max-dist");
+        var inputDrag = document.getElementById("param-drag");
+        var inputForce = document.getElementById("param-force");
+        var inputSwirl = document.getElementById("param-swirl");
+        var inputCollision = document.getElementById("param-collision");
+        var inputAudio = document.getElementById("param-audio");
+        var inputGlow = document.getElementById("param-glow");
+
+        var valCount = document.getElementById("val-count");
+        var valSize = document.getElementById("val-size");
+        var valMinWidth = document.getElementById("val-min-width");
+        var valMaxWidth = document.getElementById("val-max-width");
+        var valMaxDist = document.getElementById("val-max-dist");
+        var valDrag = document.getElementById("val-drag");
+        var valForce = document.getElementById("val-force");
+        var valSwirl = document.getElementById("val-swirl");
+        var valGlow = document.getElementById("val-glow");
+
+        var debugOverlay = document.getElementById("debug-overlay");
+        var dbgFps = document.getElementById("dbg-fps");
+        var dbgCount = document.getElementById("dbg-count");
+        var dbgSpeed = document.getElementById("dbg-speed");
+
+        inputCount.addEventListener("input", function (e) {
+          params.count = parseInt(e.target.value, 10);
+          valCount.textContent = params.count;
+        });
+        btnRespawn.addEventListener("click", function () {
+          initParticles();
+        });
+        inputDrawLines.addEventListener("change", function (e) {
+          params.drawLines = e.target.checked;
+        });
+        inputSize.addEventListener("input", function (e) {
+          params.size = parseFloat(e.target.value);
+          valSize.textContent = params.size + "px";
+        });
+        inputMinWidth.addEventListener("input", function (e) {
+          params.minWidth = parseFloat(e.target.value);
+          valMinWidth.textContent = params.minWidth + "px";
+        });
+        inputMaxWidth.addEventListener("input", function (e) {
+          params.maxWidth = parseFloat(e.target.value);
+          valMaxWidth.textContent = params.maxWidth + "px";
+        });
+        inputMaxDist.addEventListener("input", function (e) {
+          params.maxDist = parseFloat(e.target.value);
+          valMaxDist.textContent = params.maxDist + "px";
+        });
+        inputDrag.addEventListener("input", function (e) {
+          params.drag = parseFloat(e.target.value);
+          valDrag.textContent = params.drag;
+        });
+        inputForce.addEventListener("input", function (e) {
+          params.force = parseFloat(e.target.value);
+          valForce.textContent = params.force;
+        });
+        inputSwirl.addEventListener("input", function (e) {
+          params.swirl = parseFloat(e.target.value);
+          valSwirl.textContent = params.swirl;
+        });
+        inputCollision.addEventListener("change", function (e) {
+          params.collision = e.target.checked;
+        });
+        inputAudio.addEventListener("change", function (e) {
+          params.audio = e.target.checked;
+          if (params.audio) initAudio();
+        });
+        inputGlow.addEventListener("input", function (e) {
+          params.glow = parseFloat(e.target.value);
+          valGlow.textContent = params.glow + "px";
+        });
+
+        function rgbToHsv(r, g, b) {
+          r /= 255;
+          g /= 255;
+          b /= 255;
+          var max = Math.max(r, g, b),
+            min = Math.min(r, g, b);
+          var h,
+            s,
+            v = max;
+          var d = max - min;
+          s = max === 0 ? 0 : d / max;
+          if (max === min) {
+            h = 0;
+          } else {
+            switch (max) {
+              case r:
+                h = (g - b) / d + (g < b ? 6 : 0);
+                break;
+              case g:
+                h = (b - r) / d + 2;
+                break;
+              case b:
+                h = (r - g) / d + 4;
+                break;
+            }
+            h /= 6;
+          }
+          return { h: h * 360, s: s * 100, v: v * 100 };
+        }
+
+        var cv = document.getElementById("bg"),
+          cx = cv.getContext("2d"),
+          W,
+          H,
+          P = [],
+          E = [],
+          m = { x: -999, y: -999 },
+          rm = matchMedia("(prefers-reduced-motion:reduce)").matches,
+          C = { a: "", b: "" },
+          f = 0;
+        var lastTime = 0;
+
+        var frameCount = 0;
+        var lastFpsUpdate = 0;
+        var currentFps = 0;
+
+        var currentThemeHsv = { h: 240, s: 56.8, v: 98 };
+
+        var isShift = false;
+        var isSpace = false;
+        var isCtrl = false;
+        var isMouseDown = false;
+
+        function col() {
+          var s = getComputedStyle(root);
+          C.a = s.getPropertyValue("--a").trim();
+          C.b = s.getPropertyValue("--b").trim();
+
+          var d = root.getAttribute("data-theme");
+          var isDark =
+            d === "dark" ||
+            (!d && matchMedia("(prefers-color-scheme:dark)").matches);
+
+          if (isDark) {
+            currentThemeHsv = rgbToHsv(250, 136, 136);
+          } else {
+            currentThemeHsv = rgbToHsv(136, 136, 250);
+          }
+
+          for (var i = 0; i < P.length; i++) {
+            P[i].baseH =
+              (currentThemeHsv.h + (Math.random() * 20 - 10) + 360) % 360;
+            P[i].baseS = Math.min(
+              100,
+              Math.max(0, currentThemeHsv.s + (Math.random() * 20 - 10)),
+            );
+            P[i].baseV = Math.min(
+              100,
+              Math.max(0, currentThemeHsv.v + (Math.random() * 10 - 5)),
+            );
+          }
+        }
+
+        function initParticles() {
+          var n = params.count;
+          P = [];
+          for (var i = 0; i < n; i++) {
+            P.push({
+              x: Math.random() * W,
+              y: Math.random() * H,
+              vx: (Math.random() - 0.5) * 30,
+              vy: (Math.random() - 0.5) * 30,
+              baseH:
+                (currentThemeHsv.h + (Math.random() * 20 - 10) + 360) % 360,
+              baseS: Math.min(
+                100,
+                Math.max(0, currentThemeHsv.s + (Math.random() * 20 - 10)),
+              ),
+              baseV: Math.min(
+                100,
+                Math.max(0, currentThemeHsv.v + (Math.random() * 10 - 5)),
+              ),
+            });
+          }
+
+          E = [];
+          for (var i = 0; i < P.length - 1; i += 2) {
+            E.push({ a: P[i], b: P[i + 1] });
+          }
+        }
+
+        function size() {
+          var r = Math.min(devicePixelRatio || 1, 2);
+          W = innerWidth;
+          H = innerHeight;
+          cv.width = W * r;
+          cv.height = H * r;
+          cx.setTransform(r, 0, 0, r, 0, 0);
+
+          initParticles();
+        }
+
+        function draw(now) {
+          if (f++ % 60 === 0) col();
+
+          var currentTime = now || performance.now();
+          if (!lastTime) lastTime = currentTime;
+          var dt = Math.min((currentTime - lastTime) / 1000, 0.064);
+          lastTime = currentTime;
+
+          frameCount++;
+          if (!lastFpsUpdate) lastFpsUpdate = currentTime;
+          var isDebugVisible = !debugOverlay.classList.contains("ui-hidden");
+          var totalSpeed = 0;
+
+          if (currentTime - lastFpsUpdate >= 1000) {
+            currentFps = Math.round(
+              (frameCount * 1000) / (currentTime - lastFpsUpdate),
+            );
+            frameCount = 0;
+            lastFpsUpdate = currentTime;
+          }
+
+          cx.clearRect(0, 0, W, H);
+
+          var currentBaseDrag = isSpace ? 0.9 : params.drag;
+          var drag = Math.pow(currentBaseDrag, dt * 60);
+
+          var isStrongForce = isCtrl || isMouseDown || isSpace;
+          var forceBase = isStrongForce ? params.force * 4 : params.force;
+
+          var currentForce = (isShift ? -forceBase : forceBase) * dt;
+
+          var pLen = P.length;
+          var baseR = params.size;
+
+          if (params.collision) {
+            var minDist = baseR * 2;
+            var minDistSq = minDist * minDist;
+            for (var i = 0; i < pLen; i++) {
+              for (var j = i + 1; j < pLen; j += 2) {
+                var dx = P[j].x - P[i].x;
+                var dy = P[j].y - P[i].y;
+                var distSq = dx * dx + dy * dy;
+
+                if (distSq < minDistSq && distSq > 0) {
+                  var dist = Math.sqrt(distSq);
+                  var overlap = (minDist - dist) * 0.5;
+                  var nx = dx / dist;
+                  var ny = dy / dist;
+
+                  P[i].x -= nx * overlap;
+                  P[i].y -= ny * overlap;
+                  P[j].x += nx * overlap;
+                  P[j].y += ny * overlap;
+
+                  P[i].vx -= nx * 0.5;
+                  P[i].vy -= ny * 0.5;
+                  P[j].vx += nx * 0.5;
+                  P[j].vy += ny * 0.5;
+
+                  // ボール同士の衝突時（速度差に基づいて発音制限ロジックへ引き渡し）
+                  var relSpeed = Math.hypot(P[i].vx - P[j].vx, P[i].vy - P[j].vy) * 60;
+                  if (relSpeed > 20) {
+                    playBounceSound(relSpeed);
+                  }
+                }
+              }
+            }
+          }
+
+          cx.shadowBlur = params.glow;
+
+          for (var i = 0; i < pLen; i++) {
+            var p = P[i];
+            var dx = m.x - p.x,
+              dy = m.y - p.y;
+
+            if (Math.abs(dx) < 180 && Math.abs(dy) < 180) {
+              var d = Math.hypot(dx, dy);
+              if (d < 180 && d > 0) {
+                p.vx += (dx / d) * currentForce * 100;
+                p.vy += (dy / d) * currentForce * 100;
+
+                p.vx += (-dy / d) * currentForce * params.swirl * 100;
+                p.vy += (dx / d) * currentForce * params.swirl * 100;
+              }
+            }
+
+            p.vx *= drag;
+            p.vy *= drag;
+            p.x += p.vx * dt * 60;
+            p.y += p.vy * dt * 60;
+
+            var hit = false;
+            var curSpeed = Math.hypot(p.vx, p.vy) * 60;
+
+            if (p.x < 0) {
+              p.x = 0;
+              p.vx *= -1;
+              hit = true;
+            }
+            if (p.x > W) {
+              p.x = W;
+              p.vx *= -1;
+              hit = true;
+            }
+            if (p.y < 0) {
+              p.y = 0;
+              p.vy *= -1;
+              hit = true;
+            }
+            if (p.y > H) {
+              p.y = H;
+              p.vy *= -1;
+              hit = true;
+            }
+
+            if (hit && curSpeed > 50) {
+              playBounceSound(curSpeed);
+            }
+
+            var speedPx = curSpeed;
+            if (isDebugVisible) totalSpeed += speedPx;
+
+            var currentH = (p.baseH + speedPx / 16) % 360;
+            var currentS = Math.min(100, p.baseS + speedPx / 64);
+            var currentV = Math.min(100, p.baseV + speedPx / 128);
+            var currentR = Math.max(0.1, baseR + speedPx / 512);
+
+            var l = ((200 - currentS) * currentV) / 100;
+            var hslS =
+              l === 0 || l === 200
+                ? 0
+                : (currentS * currentV) / (l <= 100 ? l : 200 - l);
+            var hslL = l / 2;
+
+            var colorStr =
+              "hsl(" + currentH + ", " + hslS + "%, " + hslL + "%)";
+
+            cx.fillStyle = colorStr;
+            cx.shadowColor = colorStr;
+
+            cx.beginPath();
+            cx.arc(p.x, p.y, currentR, 0, 6.283);
+            cx.fill();
+          }
+
+          if (params.drawLines) {
+            var maxDist = params.maxDist;
+            var minW = params.minWidth;
+            var maxW = params.maxWidth;
+            var widthRange = maxW - minW;
+
+            for (var i = 0; i < E.length; i++) {
+              var e = E[i];
+              var dx = e.a.x - e.b.x;
+              var dy = e.a.y - e.b.y;
+              var distSq = dx * dx + dy * dy;
+
+              if (distSq < maxDist * maxDist) {
+                var d = Math.sqrt(distSq);
+                var ratio = 1 - d / maxDist;
+
+                var hue = (1 - ratio) * 240;
+                var strokeColor =
+                  "hsla(" + hue + ", 80%, 60%, " + ratio * 0.4 + ")";
+                var glowColor = "hsl(" + hue + ", 80%, 60%)";
+                var lineWidth = minW + ratio * widthRange;
+
+                cx.strokeStyle = strokeColor;
+                cx.shadowColor = glowColor;
+                cx.shadowBlur = params.glow;
+                cx.lineWidth = lineWidth;
+
+                cx.beginPath();
+                cx.moveTo(e.a.x, e.a.y);
+                cx.lineTo(e.b.x, e.b.y);
+                cx.stroke();
+              }
+            }
+          }
+
+          cx.shadowBlur = 0;
+
+          if (isDebugVisible) {
+            dbgFps.textContent = currentFps;
+            dbgCount.textContent = pLen;
+            dbgSpeed.textContent = (pLen > 0 ? totalSpeed / pLen : 0).toFixed(
+              1,
+            );
+          }
+
+          if (!rm) requestAnimationFrame(draw);
+        }
+
+        col();
+        size();
+        draw();
+        addEventListener("resize", size);
+
+        function updatePointer(e) {
+          if (e.type === "touchmove") {
+            if (!e.target.closest(".ctrl-panel")) {
+              e.preventDefault();
+            }
+          }
+
+          var x = e.clientX || (e.touches && e.touches[0].clientX);
+          var y = e.clientY || (e.touches && e.touches[0].clientY);
+          if (x !== undefined && y !== undefined) {
+            m.x = x;
+            m.y = y;
+            var h = document.getElementById("h"),
+              nx = x / W - 0.5,
+              ny = y / H - 0.5;
+            if (h) {
+              h.style.setProperty("--mx", nx * 2);
+              h.style.setProperty("--my", ny * 2);
+              h.style.setProperty("--rx", nx * 14 + "deg");
+              h.style.setProperty("--ry", -ny * 14 + "deg");
+            }
+          }
+        }
+
+        addEventListener("pointermove", updatePointer);
+        addEventListener("touchmove", updatePointer, { passive: false });
+
+        var ctrlPanel = document.getElementById("ctrl-panel");
+        var tgBtn = document.getElementById("tg");
+        var mobileBtns = document.querySelectorAll(".circle-btn");
+
+        function toggleUI() {
+          ctrlPanel.classList.toggle("ui-hidden");
+          tgBtn.classList.toggle("ui-hidden");
+          mobileBtns.forEach(function (btn) {
+            btn.classList.toggle("ui-hidden");
+          });
+        }
+
+        addEventListener("keydown", function (e) {
+          if (e.key === "Shift") isShift = true;
+          if (e.key === "Control") isCtrl = true;
+          if (e.code === "Space") {
+            isSpace = true;
+            e.preventDefault();
+          }
+          if (e.key === "Escape") {
+            toggleUI();
+          }
+          if (e.key === "j" || e.key === "J") {
+            debugOverlay.classList.toggle("ui-hidden");
+          }
+        });
+
+        addEventListener("keyup", function (e) {
+          if (e.key === "Shift") isShift = false;
+          if (e.key === "Control") isCtrl = false;
+          if (e.code === "Space") isSpace = false;
+        });
+
+        addEventListener("pointerdown", function (e) {
+          initAudio();
+          if (
+            e.target.closest(".ctrl-panel") ||
+            e.target.closest(".tg") ||
+            e.target.closest(".circle-btn")
+          )
+            return;
+          isMouseDown = true;
+        });
+        addEventListener("pointerup", function (e) {
+          isMouseDown = false;
+        });
+
+        function bindTouchBtn(btnId, flagSetter) {
+          var btn = document.getElementById(btnId);
+          if (!btn) return;
+
+          var active = function (e) {
+            initAudio();
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+            flagSetter(true);
+            btn.classList.add("active");
+          };
+          var inactive = function (e) {
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+            flagSetter(false);
+            btn.classList.remove("active");
+          };
+
+          btn.addEventListener("touchstart", active, { passive: false });
+          btn.addEventListener("touchend", inactive, { passive: false });
+          btn.addEventListener("mousedown", active);
+          btn.addEventListener("mouseup", inactive);
+          btn.addEventListener("mouseleave", inactive);
+        }
+
+        bindTouchBtn("mbtn-push", function (val) {
+          isShift = val;
+        });
+        bindTouchBtn("mbtn-slow", function (val) {
+          isSpace = val;
+        });
+        bindTouchBtn("mbtn-strong", function (val) {
+          isCtrl = val;
+        });
+
+        document
+          .getElementById("mbtn-toggle-ui")
+          .addEventListener("click", function (e) {
+            e.stopPropagation();
+            toggleUI();
+          });
+      })();
+    </script>
+  </body>
+</html>
